@@ -1,0 +1,6 @@
+{
+  "name": "Dangla School SMS",
+  "description": "School Management System for Dangla City School supporting Admin, Teacher, Student, and Parent dashboards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
