@@ -173,58 +173,96 @@ fun LoginScreen(viewModel: SchoolViewModel) {
                 Text("Login to Dashboard", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Quick Login Feature
-            Text(
-                text = "Demo Accounts (Quick Select)",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-            )
+            var showDemoAccounts by remember { mutableStateOf(false) }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            TextButton(
+                onClick = { showDemoAccounts = !showDemoAccounts },
+                modifier = Modifier.testTag("toggle_demo_button")
             ) {
-                val demoUsers = listOf(
-                    Triple("Admin", "admin@school.com", "admin123"),
-                    Triple("Teacher", "abebe@school.com", "teacher123")
-                )
-                demoUsers.forEach { (label, demEmail, demPass) ->
-                    OutlinedButton(
-                        onClick = {
-                            email = demEmail
-                            password = demPass
-                            viewModel.login(demEmail, demPass)
-                        },
-                        modifier = Modifier.weight(1f),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
-                    ) {
-                        Text(label, fontSize = 12.sp)
-                    }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = if (showDemoAccounts) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = if (showDemoAccounts) "Hide Demo Access" else "Reveal Demo Credentials",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            AnimatedVisibility(
+                visible = showDemoAccounts,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
             ) {
-                val demoUsers2 = listOf(
-                    Triple("Student", "daniel@school.com", "student123"),
-                    Triple("Parent", "kebede@school.com", "parent123")
-                )
-                demoUsers2.forEach { (label, demEmail, demPass) ->
-                    OutlinedButton(
-                        onClick = {
-                            email = demEmail
-                            password = demPass
-                            viewModel.login(demEmail, demPass)
-                        },
-                        modifier = Modifier.weight(1f),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Demo Accounts (Quick Select)",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(label, fontSize = 12.sp)
+                        val demoUsers = listOf(
+                            Triple("Admin", "admin@school.com", "admin123"),
+                            Triple("Teacher", "abebe@school.com", "teacher123")
+                        )
+                        demoUsers.forEach { (label, demEmail, demPass) ->
+                            OutlinedButton(
+                                onClick = {
+                                    email = demEmail
+                                    password = demPass
+                                    viewModel.login(demEmail, demPass)
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                            ) {
+                                Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val demoUsers2 = listOf(
+                            Triple("Student", "daniel@school.com", "student123"),
+                            Triple("Parent", "kebede@school.com", "parent123")
+                        )
+                        demoUsers2.forEach { (label, demEmail, demPass) ->
+                            OutlinedButton(
+                                onClick = {
+                                    email = demEmail
+                                    password = demPass
+                                    viewModel.login(demEmail, demPass)
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                            ) {
+                                Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }
@@ -250,44 +288,53 @@ fun AdminDashboard(viewModel: SchoolViewModel) {
     var activeTab by remember { mutableStateOf("Dashboard") }
     val tabs = listOf("Dashboard", "Students", "Teachers", "Parents", "Classes", "Subjects", "Announcements")
 
-    Scaffold(
-        topBar = {
-            CleanHeader(
-                title = currentUser?.name ?: "Admin",
-                subtitle = "Admin Panel",
-                onLogout = { viewModel.logout() }
-            )
-        },
-        bottomBar = {
-            ScrollableTabRow(
-                selectedTabIndex = tabs.indexOf(activeTab),
-                edgePadding = 16.dp,
-                containerColor = MaterialTheme.colorScheme.surface
-            ) {
-                tabs.forEach { tab ->
-                    Tab(
-                        selected = activeTab == tab,
-                        onClick = { activeTab = tab },
-                        text = { Text(tab, fontWeight = FontWeight.SemiBold) }
-                    )
+    Row(modifier = Modifier.fillMaxSize()) {
+        CleanSideNavigation(
+            tabs = tabs,
+            activeTab = activeTab,
+            onTabSelected = { activeTab = it },
+            tabIcon = { tab ->
+                when (tab) {
+                    "Dashboard" -> Icons.Default.Dashboard
+                    "Students" -> Icons.Default.School
+                    "Teachers" -> Icons.Default.Person
+                    "Parents" -> Icons.Default.People
+                    "Classes" -> Icons.Default.Class
+                    "Subjects" -> Icons.Default.Book
+                    else -> Icons.Default.Announcement
                 }
-            }
-        }
-    ) { padding ->
-        Box(
+            },
+            username = currentUser?.name ?: "Admin",
+            role = "Administrator",
+            onLogout = { viewModel.logout() }
+        )
+
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+                .weight(1f)
+                .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            when (activeTab) {
-                "Dashboard" -> AdminStatsOverview(students.size, teachers.size, parents.size, classes.size, subjects.size, announcements, events)
-                "Students" -> AdminStudentsTab(viewModel, students, classes, parents)
-                "Teachers" -> AdminTeachersTab(viewModel, teachers)
-                "Parents" -> AdminParentsTab(viewModel, parents)
-                "Classes" -> AdminClassesTab(viewModel, classes, teachers)
-                "Subjects" -> AdminSubjectsTab(viewModel, subjects)
-                "Announcements" -> AdminAnnouncementsTab(viewModel, announcements)
+            CleanHeader(
+                title = currentUser?.name ?: "Admin",
+                subtitle = "Admin Panel - $activeTab",
+                onLogout = { viewModel.logout() }
+            )
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                when (activeTab) {
+                    "Dashboard" -> AdminStatsOverview(students.size, teachers.size, parents.size, classes.size, subjects.size, announcements, events)
+                    "Students" -> AdminStudentsTab(viewModel, students, classes, parents)
+                    "Teachers" -> AdminTeachersTab(viewModel, teachers)
+                    "Parents" -> AdminParentsTab(viewModel, parents)
+                    "Classes" -> AdminClassesTab(viewModel, classes, teachers)
+                    "Subjects" -> AdminSubjectsTab(viewModel, subjects)
+                    "Announcements" -> AdminAnnouncementsTab(viewModel, announcements)
+                }
             }
         }
     }
@@ -1030,41 +1077,47 @@ fun TeacherDashboard(viewModel: SchoolViewModel) {
     var activeTab by remember { mutableStateOf("Attendance") }
     val tabs = listOf("Attendance", "Assignments", "Exams & Marks", "Messages")
 
-    Scaffold(
-        topBar = {
-            CleanHeader(
-                title = "${currentTeacher?.firstName} ${currentTeacher?.lastName}",
-                subtitle = "Teacher Portal",
-                onLogout = { viewModel.logout() }
-            )
-        },
-        bottomBar = {
-            CleanBottomNavigation(
-                tabs = tabs,
-                activeTab = activeTab,
-                onTabSelected = { activeTab = it },
-                tabIcon = { tab ->
-                    when (tab) {
-                        "Attendance" -> Icons.Default.HowToReg
-                        "Assignments" -> Icons.Default.Assignment
-                        "Exams & Marks" -> Icons.Default.Grade
-                        else -> Icons.Default.Message
-                    }
+    Row(modifier = Modifier.fillMaxSize()) {
+        CleanSideNavigation(
+            tabs = tabs,
+            activeTab = activeTab,
+            onTabSelected = { activeTab = it },
+            tabIcon = { tab ->
+                when (tab) {
+                    "Attendance" -> Icons.Default.HowToReg
+                    "Assignments" -> Icons.Default.Assignment
+                    "Exams & Marks" -> Icons.Default.Grade
+                    else -> Icons.Default.Message
                 }
-            )
-        }
-    ) { padding ->
-        Box(
+            },
+            username = "${currentTeacher?.firstName} ${currentTeacher?.lastName}",
+            role = "Teacher Portal",
+            onLogout = { viewModel.logout() }
+        )
+
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+                .weight(1f)
+                .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            when (activeTab) {
-                "Attendance" -> TeacherAttendanceTab(viewModel, students, classes)
-                "Assignments" -> TeacherAssignmentsTab(viewModel, assignments, submissions, classes)
-                "Exams & Marks" -> TeacherMarksTab(viewModel, students, classes)
-                "Messages" -> TeacherMessagesTab(viewModel)
+            CleanHeader(
+                title = "${currentTeacher?.firstName} ${currentTeacher?.lastName}",
+                subtitle = "Teacher Portal - $activeTab",
+                onLogout = { viewModel.logout() }
+            )
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                when (activeTab) {
+                    "Attendance" -> TeacherAttendanceTab(viewModel, students, classes)
+                    "Assignments" -> TeacherAssignmentsTab(viewModel, assignments, submissions, classes)
+                    "Exams & Marks" -> TeacherMarksTab(viewModel, students, classes)
+                    "Messages" -> TeacherMessagesTab(viewModel)
+                }
             }
         }
     }
@@ -1394,41 +1447,47 @@ fun StudentDashboard(viewModel: SchoolViewModel) {
     var activeTab by remember { mutableStateOf("Academic") }
     val tabs = listOf("Academic", "Assignments", "Fees", "Announcements")
 
-    Scaffold(
-        topBar = {
-            CleanHeader(
-                title = "${currentStudent?.firstName} ${currentStudent?.lastName}",
-                subtitle = "Student Portal",
-                onLogout = { viewModel.logout() }
-            )
-        },
-        bottomBar = {
-            CleanBottomNavigation(
-                tabs = tabs,
-                activeTab = activeTab,
-                onTabSelected = { activeTab = it },
-                tabIcon = { tab ->
-                    when (tab) {
-                        "Academic" -> Icons.Default.Assessment
-                        "Assignments" -> Icons.Default.Assignment
-                        "Fees" -> Icons.Default.AttachMoney
-                        else -> Icons.Default.Announcement
-                    }
+    Row(modifier = Modifier.fillMaxSize()) {
+        CleanSideNavigation(
+            tabs = tabs,
+            activeTab = activeTab,
+            onTabSelected = { activeTab = it },
+            tabIcon = { tab ->
+                when (tab) {
+                    "Academic" -> Icons.Default.Assessment
+                    "Assignments" -> Icons.Default.Assignment
+                    "Fees" -> Icons.Default.AttachMoney
+                    else -> Icons.Default.Announcement
                 }
-            )
-        }
-    ) { padding ->
-        Box(
+            },
+            username = "${currentStudent?.firstName} ${currentStudent?.lastName}",
+            role = "Student Portal",
+            onLogout = { viewModel.logout() }
+        )
+
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+                .weight(1f)
+                .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            when (activeTab) {
-                "Academic" -> StudentAcademicTab(currentStudent, examResults)
-                "Assignments" -> StudentAssignmentsTab(viewModel, currentStudent, allAssignments)
-                "Fees" -> StudentFeesTab(currentStudent, fees)
-                "Announcements" -> StudentAnnouncementsTab(allAnnouncements)
+            CleanHeader(
+                title = "${currentStudent?.firstName} ${currentStudent?.lastName}",
+                subtitle = "Student Portal - $activeTab",
+                onLogout = { viewModel.logout() }
+            )
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                when (activeTab) {
+                    "Academic" -> StudentAcademicTab(currentStudent, examResults)
+                    "Assignments" -> StudentAssignmentsTab(viewModel, currentStudent, allAssignments)
+                    "Fees" -> StudentFeesTab(currentStudent, fees)
+                    "Announcements" -> StudentAnnouncementsTab(allAnnouncements)
+                }
             }
         }
     }
@@ -1656,120 +1715,133 @@ fun ParentDashboard(viewModel: SchoolViewModel) {
     val myChildren = students.filter { it.parentId == currentParent?.id }
     val selectedChild = myChildren.find { it.id == selectedChildId }
 
-    Scaffold(
-        topBar = {
-            CleanHeader(
-                title = "${currentParent?.firstName} ${currentParent?.lastName}",
-                subtitle = "Parent Portal",
-                onLogout = { viewModel.logout() }
-            )
-        }
-    ) { padding ->
+    Row(modifier = Modifier.fillMaxSize()) {
+        CleanSideNavigation(
+            tabs = listOf("Overview"),
+            activeTab = "Overview",
+            onTabSelected = { },
+            tabIcon = { Icons.Default.Dashboard },
+            username = "${currentParent?.firstName} ${currentParent?.lastName}",
+            role = "Parent Portal",
+            onLogout = { viewModel.logout() }
+        )
+
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+                .weight(1f)
+                .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.background)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Switch Child Monitor", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            CleanHeader(
+                title = "${currentParent?.firstName} ${currentParent?.lastName}",
+                subtitle = "Parent Portal - Overview",
+                onLogout = { viewModel.logout() }
+            )
 
-            // Child selector chips
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                myChildren.forEach { child ->
-                    FilterChip(
-                        selected = selectedChildId == child.id,
-                        onClick = { viewModel.selectChild(child.id) },
-                        label = { Text("${child.firstName} ${child.lastName}") }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text("Switch Child Monitor", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+
+                // Child selector chips
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    myChildren.forEach { child ->
+                        FilterChip(
+                            selected = selectedChildId == child.id,
+                            onClick = { viewModel.selectChild(child.id) },
+                            label = { Text("${child.firstName} ${child.lastName}") }
+                        )
+                    }
+                }
+
+                if (selectedChild == null) {
+                    EmptyState("No Children Linked to Account")
+                } else {
+                    Text(
+                        "Monitoring Active: ${selectedChild.firstName}",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary
                     )
-                }
-            }
 
-            if (selectedChild == null) {
-                EmptyState("No Children Linked to Account")
-            } else {
-                Text(
-                    "Monitoring Active: ${selectedChild.firstName}",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-
-                // 1. Attendance Widget
-                val childAttendance = attendanceLogs.filter { it.studentId == selectedChild.id }
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Attendance Report", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        if (childAttendance.isEmpty()) {
-                            Text("No Attendance Logs Recorded", fontSize = 14.sp)
-                        } else {
-                            childAttendance.forEach { att ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(att.date, fontSize = 14.sp)
-                                    Text(att.status, fontWeight = FontWeight.Bold, color = if (att.status == "Present") MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // 2. Grades Widget
-                val childResults = examResults.filter { it.studentId == selectedChild.id }
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Exam & Grades", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        if (childResults.isEmpty()) {
-                            Text("No Grades Declared", fontSize = 14.sp)
-                        } else {
-                            childResults.forEach { res ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Term Exam Score", fontSize = 14.sp)
-                                    Text("${res.marks}% (Grade: ${res.grade})", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // 3. Fee Monitoring Widget
-                val childFees = fees.filter { it.studentId == selectedChild.id }
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Outstanding Fees", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        if (childFees.isEmpty()) {
-                            Text("No Fees Assigned", fontSize = 14.sp)
-                        } else {
-                            childFees.forEach { fee ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column {
-                                        Text(fee.feeType, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                                        Text("Due: ${fee.dueDate}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                    // 1. Attendance Widget
+                    val childAttendance = attendanceLogs.filter { it.studentId == selectedChild.id }
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Attendance Report", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            if (childAttendance.isEmpty()) {
+                                Text("No Attendance Logs Recorded", fontSize = 14.sp)
+                            } else {
+                                childAttendance.forEach { att ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(att.date, fontSize = 14.sp)
+                                        Text(att.status, fontWeight = FontWeight.Bold, color = if (att.status == "Present") MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error)
                                     }
-                                    Text(
-                                        "$${fee.amount} (${fee.status})",
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (fee.status == "Paid") MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error
-                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // 2. Grades Widget
+                    val childResults = examResults.filter { it.studentId == selectedChild.id }
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Exam & Grades", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            if (childResults.isEmpty()) {
+                                Text("No Grades Declared", fontSize = 14.sp)
+                            } else {
+                                childResults.forEach { res ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("Term Exam Score", fontSize = 14.sp)
+                                        Text("${res.marks}% (Grade: ${res.grade})", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 3. Fee Monitoring Widget
+                    val childFees = fees.filter { it.studentId == selectedChild.id }
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Outstanding Fees", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            if (childFees.isEmpty()) {
+                                Text("No Fees Assigned", fontSize = 14.sp)
+                            } else {
+                                childFees.forEach { fee ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column {
+                                            Text(fee.feeType, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                                            Text("Due: ${fee.dueDate}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                                        }
+                                        Text(
+                                            "$${fee.amount} (${fee.status})",
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (fee.status == "Paid") MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1867,56 +1939,163 @@ fun CleanHeader(
 }
 
 @Composable
-fun CleanBottomNavigation(
+fun CleanSideNavigation(
     tabs: List<String>,
     activeTab: String,
     onTabSelected: (String) -> Unit,
-    tabIcon: (String) -> ImageVector
+    tabIcon: (String) -> ImageVector,
+    username: String,
+    role: String,
+    onLogout: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-    ) {
-        HorizontalDivider(
-            color = Color(0xFFE2E8F0),
-            thickness = 1.dp
-        )
-        Row(
+    BoxWithConstraints {
+        val isExpanded = maxWidth >= 540.dp
+        val sidebarWidth = if (isExpanded) 200.dp else 72.dp
+        
+        Surface(
             modifier = Modifier
-                .navigationBarsPadding()
-                .fillMaxWidth()
-                .padding(vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
+                .width(sidebarWidth)
+                .fillMaxHeight(),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 1.dp
         ) {
-            tabs.forEach { tab ->
-                val isSelected = activeTab == tab
-                val color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                val icon = tabIcon(tab)
-                
+            Row(modifier = Modifier.fillMaxHeight()) {
                 Column(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { onTabSelected(tab) }
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                        .padding(vertical = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = tab,
-                        tint = color,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = tab,
-                        fontSize = 11.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = color
-                    )
+                    Column(
+                        horizontalAlignment = if (isExpanded) Alignment.Start else Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // School Logo / Icon
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = if (isExpanded) 16.dp else 8.dp)
+                                .padding(bottom = 24.dp)
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.School,
+                                contentDescription = "School Logo",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        
+                        if (isExpanded) {
+                            Column(modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
+                                Text(
+                                    text = username,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = role,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        // Navigation Items
+                        tabs.forEach { tab ->
+                            val isSelected = activeTab == tab
+                            val activeBg = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                            val textColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            val iconColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                            
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isSelected) activeBg else Color.Transparent)
+                                    .clickable { onTabSelected(tab) }
+                                    .padding(horizontal = if (isExpanded) 12.dp else 10.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = if (isExpanded) Arrangement.Start else Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = tabIcon(tab),
+                                    contentDescription = tab,
+                                    tint = iconColor,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                if (isExpanded) {
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        text = tab,
+                                        fontSize = 13.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = textColor,
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Logout Section
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        HorizontalDivider(
+                            color = Color(0xFFE2E8F0),
+                            thickness = 1.dp,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onLogout() }
+                                .padding(horizontal = if (isExpanded) 12.dp else 10.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = if (isExpanded) Arrangement.Start else Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Logout,
+                                contentDescription = "Logout",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            if (isExpanded) {
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "Logout",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                    }
                 }
+                HorizontalDivider(
+                    color = Color(0xFFE2E8F0),
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(1.dp)
+                )
             }
         }
     }
